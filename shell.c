@@ -17,6 +17,12 @@
 #include "process.h"
 #include "shell.h"
 
+int executeCommand(tok_t arg[]){
+  execv(arg[0],arg);
+}
+
+
+
 int cmd_quit(tok_t arg[]) {
   printf("Bye\n");
   exit(0);
@@ -132,7 +138,25 @@ int shell (int argc, char *argv[]) {
     fundex = lookup(t[0]); /* Is first token a shell literal */
     if(fundex >= 0) cmd_table[fundex].fun(&t[1]);
     else {
-      fprintf(stdout, "This shell only supports built-ins. Replace this to run programs as commands.\n");
+
+      pid_t cpid = fork(); 
+
+      pid_t mypid;
+      if( cpid > 0 ) {
+	mypid = getpid();
+	int status;
+	pid_t tcpid = wait(&status);
+	
+      }
+      else if( cpid == 0 ){
+	executeCommand(t);
+	exit(0);
+      }
+      else {
+	perror( "Fork failed" );
+	exit( EXIT_FAILURE );
+      }
+      
     }
     if(getcwd(cwd,1025) != NULL)
     fprintf(stdout,"%d  %s :",lineNum ,cwd);
