@@ -17,21 +17,48 @@
 #include "process.h"
 #include "shell.h"
 
+//Change Directory:
+int cmd_cd(tok_t arg[]){
+  chdir(arg[0]);
+  
+  //If '~' is entered:
+  
+  //If only 'cd' is entered:
+  
+  //If 'cd-' is entered:
+
+  //If entire path of cd is entered:
+  
+}
+
+//Change Path:
 int executeCommand(tok_t arg[]){
   execv(arg[0],arg);
+  
+  //If entire path not entered:
+  char *envstring  = getenv("PATH");
+  char *endofpath = arg[0];
+  char path[4096];
+  tok_t *envarr = getToks(envstring);
+  int i;
+  for(i =0; envarr[i]!=NULL; i++){
+    strcpy(path,envarr[i]);
+    strcat(path,"/");
+    strcat(path,arg[0]);
+    execv(path,arg);
+  }
+  
 }
 
 
+int cmd_help(tok_t arg[]);
+int cmd_cd(tok_t arg[]);
 
 int cmd_quit(tok_t arg[]) {
   printf("Bye\n");
   exit(0);
   return 1;
 }
-
-int cmd_help(tok_t arg[]);
-int cmd_cd(tok_t arg[]);
-
 
 /* Command Lookup table */
 typedef int cmd_fun_t (tok_t args[]); /* cmd functions take token array and return int */
@@ -55,10 +82,6 @@ int cmd_help(tok_t arg[]) {
   return 1;
 }
 
-int cmd_cd(tok_t arg[]){
-  chdir(arg[0]);
-}
-
 int lookup(char cmd[]) {
   int i;
   for (i=0; i < (sizeof(cmd_table)/sizeof(fun_desc_t)); i++) {
@@ -71,24 +94,24 @@ void init_shell()
 {
   /* Check if we are running interactively */
   shell_terminal = STDIN_FILENO;
-
+  
   /** Note that we cannot take control of the terminal if the shell
       is not interactive */
   shell_is_interactive = isatty(shell_terminal);
-
+  
   if(shell_is_interactive){
-
+    
     /* force into foreground */
     while(tcgetpgrp (shell_terminal) != (shell_pgid = getpgrp()))
       kill( - shell_pgid, SIGTTIN);
-
+    
     shell_pgid = getpid();
     /* Put shell in its own process group */
     if(setpgid(shell_pgid, shell_pgid) < 0){
       perror("Couldn't put the shell in its own process group");
       exit(1);
     }
-
+    
     /* Take control of the terminal */
     tcsetpgrp(shell_terminal, shell_pgid);
     tcgetattr(shell_terminal, &shell_tmodes);
@@ -114,7 +137,6 @@ process* create_process(char* inputString)
 }
 
 
-
 int shell (int argc, char *argv[]) {
   char *s = malloc(INPUT_STRING_SIZE+1);			/* user input string */
   tok_t *t;			/* tokens parsed from input */
@@ -123,12 +145,12 @@ int shell (int argc, char *argv[]) {
   pid_t pid = getpid();		/* get current processes PID */
   pid_t ppid = getppid();	/* get parents PID */
   pid_t cpid, tcpid, cpgid;
-
+  
   init_shell();
   char cwd[1024 + 1];
- 
-    printf("%s running as PID %d under %d\n",argv[0],pid,ppid);
- 
+  
+  printf("%s running as PID %d under %d\n",argv[0],pid,ppid);
+  
   lineNum=0;
   if(getcwd(cwd,1025) != NULL)
     fprintf(stdout,"%d  %s :",lineNum ,cwd);
@@ -138,15 +160,14 @@ int shell (int argc, char *argv[]) {
     fundex = lookup(t[0]); /* Is first token a shell literal */
     if(fundex >= 0) cmd_table[fundex].fun(&t[1]);
     else {
-
+      
       pid_t cpid = fork(); 
-
+      
       pid_t mypid;
       if( cpid > 0 ) {
 	mypid = getpid();
 	int status;
 	pid_t tcpid = wait(&status);
-	
       }
       else if( cpid == 0 ){
 	executeCommand(t);
@@ -159,7 +180,7 @@ int shell (int argc, char *argv[]) {
       
     }
     if(getcwd(cwd,1025) != NULL)
-    fprintf(stdout,"%d  %s :",lineNum ,cwd);
+      fprintf(stdout,"%d  %s :",lineNum ,cwd);
   }
   return 0;
 }
