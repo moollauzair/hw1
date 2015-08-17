@@ -26,8 +26,6 @@ int cmd_cd(tok_t arg[]){
   //If only 'cd' is entered:
   
   //If 'cd-' is entered:
-
-  //If entire path of cd is entered:
   
 }
 
